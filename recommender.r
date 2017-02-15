@@ -32,4 +32,4 @@ user_apart_df=dcast(review, apart_id ~ author_id, length)
 apart_for_user_profile_matrix=spbapart[rownames(user_apart_df),]
 
 
-
+#HELLO!
