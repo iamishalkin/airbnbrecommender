@@ -31,5 +31,8 @@ user_apart_df=dcast(review, apart_id ~ author_id, length)
 #Now we should delete Aparts, that have never been rated
 apart_for_user_profile_matrix=spbapart[rownames(user_apart_df),]
 
+#Now get user profile matrix by dot product
+
+#Hello world
 
 
