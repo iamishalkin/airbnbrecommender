@@ -34,12 +34,14 @@ aparts=rbind(mskapart, spbapart)
 #load reviews
 
 spbreview <- read_csv("Data-review/Review_Saint-Petersburg--Russia.csv")
+
+
 mskreview=read_csv("Data-review/Review_Moscow--Russia.csv")
 review=rbind(spbreview,mskreview)
 
 user_reviews=review[,1:2]
 
-user_reviews=merge(user_reviews, aparts, by=apart_id)
+user_reviews=inner_join(user_reviews, aparts, by='apart_id')
 
 library(reshape2)
 user_apart_df=dcast(review, apart_id ~ author_id, length)
