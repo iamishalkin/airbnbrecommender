@@ -55,9 +55,37 @@ user_reviews=inner_join(user_reviews, aparts, by='apart_id')
 #create user profile
 profile=filter(user_reviews, author_id==4155392)
 #to create a profile we should count mean for all integers and moda for all factor variables
+#http://stackoverflow.com/questions/17907944/how-to-select-all-factor-variables-in-r
+
+create_profile=function(profile){
+  column_order=colnames(profile)
+  library(dplyr)
+  Mode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+  }
+  #all factor features get mode(мода)
+  is.fact <- sapply(profile, is.factor)
+  factors.profile <- profile[, is.fact]
+  factor_modes=as.data.frame(t(apply(factors.profile,2,Mode)))
+  #all continouos features get mean
+  is.num <- sapply(profile, is.numeric)
+  numeric.profile=profile[,is.num]
+  numeric_means=as.data.frame(t(colMeans(numeric.profile, na.rm =TRUE)))#Среди прочего, мы считаем среднее по апарт айди, но, может, это нам и не помешает
+  final_profile=cbind(factor_modes,numeric_means)
+  final_profile=subset(final_profile, select=column_order)
+  profile=final_profile
+  }
 
 
 
+
+
+
+
+
+
+profile=create_profile(profile)
 #we would like to recommend him apart in kaliningrad
 
 
