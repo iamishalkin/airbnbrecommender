@@ -20,7 +20,7 @@ selectcolumns=function(df){
   #df <- df[order(df$apart_id),]
   df=as.data.frame(df)
   rownames(df)=df$apart_id
-  df=subset(df, select=-c(apart_name, city,description, special_offer,Paid_parking_off_premises, in_building, host_id,lat,lng, native_currency))
+  df=subset(df, select=-c(apart_name, city,description, special_offer,Paid_parking_off_premises, in_building, host_id,lat,lng, native_currency, at_page))
 }
 spbapart=selectcolumns(spbapart)
 mskapart=selectcolumns(mskapart)
@@ -74,8 +74,10 @@ create_profile=function(profile){
   numeric_means=as.data.frame(t(colMeans(numeric.profile, na.rm =TRUE)))#Среди прочего, мы считаем среднее по апарт айди, но, может, это нам и не помешает
   final_profile=cbind(factor_modes,numeric_means)
   final_profile=subset(final_profile, select=column_order)
-  profile=final_profile
-  }
+  rownames(final_profile)=final_profile$author_id
+  profile=subset(final_profile, select=-c(apart_id, author_id))
+  
+}
 
 
 
@@ -86,9 +88,25 @@ create_profile=function(profile){
 
 
 profile=create_profile(profile)
+
 #we would like to recommend him apart in kaliningrad
+#let's calculate cosine distance between profile vector and all the flats in klg
+library(lsa)
+klgapart=subset(klgapart, select=-apart_id)
+
+indx <- sapply(profile, is.factor)
+klgapart[indx] <- lapply(klgapart[indx], function(x) as.numeric(x))
+profile[indx] <- lapply(profile[indx], function(x) as.numeric(x))
 
 
+klg_matrix=as.matrix(klgapart)
+profile_matrix=as.matrix(profile)
+cosres=cosine(profile_matrix[1,],klg_matrix[1,])
+
+class(profile[1,])
+
+res <- apply(klg_matrix, 1, lsa::cosine, y=profile_matrix[1,])
+#http://stackoverflow.com/questions/34511830/how-to-calculate-cosine-similarity-between-vector-and-each-rows-of-data-frame-in
 
 library(reshape2)
 user_apart_df=dcast(review, apart_id ~ author_id, length)
