@@ -1,7 +1,7 @@
 #https://muffynomster.wordpress.com/2015/06/07/building-a-movie-recommendation-engine-with-r/
 #https://github.com/iamishalkin/airbnbrecommender
 library(recommenderlab)
-
+library(zoo)
 #1 try with spb data
 #create item matrix at first without preprocessing
 library(readr)
@@ -21,6 +21,9 @@ selectcolumns=function(df){
   df=as.data.frame(df)
   rownames(df)=df$apart_id
   df=subset(df, select=-c(apart_name, city,description, special_offer,Paid_parking_off_premises, in_building, host_id,lat,lng, native_currency, at_page))
+  #delete inimportatant columns with NA
+  df=subset(df, select=-c(extra_price_native, cleaning_fee_native,square_feet))
+  #df$cleaning_fee_native[-is.na]=mean
 }
 spbapart=selectcolumns(spbapart)
 mskapart=selectcolumns(mskapart)
@@ -91,6 +94,7 @@ profile=create_profile(profile)
 
 #we would like to recommend him apart in kaliningrad
 #let's calculate cosine distance between profile vector and all the flats in klg
+
 library(lsa)
 klgapart=subset(klgapart, select=-apart_id)
 
@@ -99,29 +103,16 @@ klgapart[indx] <- lapply(klgapart[indx], function(x) as.numeric(x))
 profile[indx] <- lapply(profile[indx], function(x) as.numeric(x))
 
 
+klgapart=na.aggregate(klgapart)
+profile=na.aggregate(profile)
 klg_matrix=as.matrix(klgapart)
 profile_matrix=as.matrix(profile)
-cosres=cosine(profile_matrix[1,],klg_matrix[1,])
-
-class(profile[1,])
-
-res <- apply(klg_matrix, 1, lsa::cosine, y=profile_matrix[1,])
-#http://stackoverflow.com/questions/34511830/how-to-calculate-cosine-similarity-between-vector-and-each-rows-of-data-frame-in
-
-library(reshape2)
-user_apart_df=dcast(review, apart_id ~ author_id, length)
-
-#Now we should delete Aparts, that have never been rated
-apart_for_user_profile_matrix=spbapart[rownames(user_apart_df),]
 
 
+res <- as.data.frame(apply(klg_matrix, 1, lsa::cosine, y=profile_matrix[1,]))
+res$apart_id=rownames(res)
+res=arrange(res, desc(res[,1]))
+six_best_recoms=as.data.frame(head(res))
+six_best_recoms$url=paste('https://www.airbnb.com/rooms/',as.character(six_best_recoms$apart_id), sep='')
 
-#Now get user profile matrix by dot product
 
-
-
-
-
-#Hello world
-
-#HELLO:)
