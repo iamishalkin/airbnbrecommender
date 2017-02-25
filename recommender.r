@@ -57,6 +57,7 @@ user_reviews=inner_join(user_reviews, aparts, by='apart_id')
 
 #create user profile
 profile=filter(user_reviews, author_id==4155392)
+profile=inner_join(profile,aparts, by= "apart_id")
 #to create a profile we should count mean for all integers and moda for all factor variables
 #http://stackoverflow.com/questions/17907944/how-to-select-all-factor-variables-in-r
 
