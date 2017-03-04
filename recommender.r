@@ -1,5 +1,6 @@
 #https://muffynomster.wordpress.com/2015/06/07/building-a-movie-recommendation-engine-with-r/
 #https://github.com/iamishalkin/airbnbrecommender
+#ggg
 library(recommenderlab)
 library(zoo)
 #1 try with spb data
