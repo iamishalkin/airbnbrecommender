@@ -116,4 +116,23 @@ res=arrange(res, desc(res[,1]))
 six_best_recoms=as.data.frame(head(res))
 six_best_recoms$url=paste('https://www.airbnb.com/rooms/',as.character(six_best_recoms$apart_id), sep='')
 
+###PCA
+class(klgapart)
+data.pca <- prcomp(klgapart,
+                   center = TRUE,
+                   scale. = TRUE) 
+data.pca1 <- as.data.frame(data.pca) 
+plot(data.pca)
+summary(data.pca)
+
+colnames(data.pca) <- NULL
+
+library(caret)
+preprocessParams <- preProcess(klgapart, method=c("center", "scale", "pca"))
+# summarize transform parameters
+preprocessParams
+
+preprocessParams$rotation
+
+
 
