@@ -134,5 +134,101 @@ preprocessParams
 
 preprocessParams$rotation
 
+library(quanteda)
+library(jsonlite)
+library(stringr)
 
+amazonCorpus <- corpus(rus$review)
+
+summary(amazonCorpus, n = 10)
+
+texts(amazonCorpus)[1]
+texts(amazonCorpus)[2]
+
+docvars(amazonCorpus, "Author") <- rus$author_id
+summary(amazonCorpus, n = 10)
+head(kwic(amazonCorpus, "понравилось"))
+example <- texts(amazonCorpus)[1]
+tokenize(example)
+tokenize(example, removePunct = T)
+tokenize(example, removePunct = TRUE, removeNumbers = TRUE)
+tokenize(amazonCorpus)
+tokenize(example, what = "character")
+tokenize(example, what = "sentence")
+amazondfm <- dfm(amazonCorpus)
+amazondfm[1:10,1:6]
+amazondfmStop <- dfm(amazonCorpus, ignoredFeatures = stopwords("russian"))
+amazondfmStop[1:10,1:6]
+amazondfmStop <- dfm(amazonCorpus, ignoredFeatures = c("жилье", stopwords("russian")))
+amazondfmStop[1:10,1:6]
+head(stopwords("russian"), 10)
+topfeatures(amazondfmStop, 30)
+amazondfmStop <- dfm(amazonCorpus, stem = TRUE, language = "russian", 
+                     ignoredFeatures = c("квартира", "квартире", "квартиры",
+                                         stopwords("russian")))
+plot(amazondfmStop[1:20,])
+neg = readLines("~/materials/minor/datatech/text/negative-words.txt")
+pos = readLines("~/materials/minor/datatech/text/positive-words.txt")
+pos=pos[36:length(pos)]
+neg=neg[36:length(neg)]
+myDict <- dictionary(list(negative=neg,
+                          positive=pos))
+g = applyDictionary(amazondfmStop, myDict, valuetype = "glob",case_insensitive = TRUE) 
+head(g)
+
+
+supos <- read.csv2("~/airbnbrecommender/super-positive.csv")
+supos$word = as.character(supos$word)
+supos = readLines("~/airbnbrecommender/super-positive.csv")
+supos = na.omit(supos)
+supos <- corpus(supos$word)
+supos <- dfm(supos, stem = TRUE, language = "russian")
+head(supos)
+
+spos <- read.csv2("~/airbnbrecommender/spositive.csv")
+spos$word = as.character(spos$word)
+spos = readLines("~/airbnbrecommender/spositive.csv")
+spos = na.omit(spos)
+spos <- corpus(spos$word)
+spos <- dfm(spos, stem = TRUE, language = "russian")
+head(supos)
+
+pos <- read.csv2("~/airbnbrecommender/pozitiv.csv")
+pos$word = as.character(pos$word)
+pos <- corpus(pos$word)
+pos <- dfm(pos, stem = TRUE, language = "russian")
+head(pos)
+
+neg <- read.csv2("~/airbnbrecommender/negative.csv")
+neg$word = as.character(neg$word)
+neg <- corpus(neg$word)
+neg <- dfm(neg, stem = TRUE, language = "russian")
+head(neg)
+
+suneg <- read.csv2("~/airbnbrecommender/negative.csv")
+suneg$word = as.character(suneg$word)
+suneg <- corpus(suneg$word)
+suneg <- dfm(suneg, stem = TRUE, language = "russian")
+head(suneg)
+
+myDict <- dictionary(list(negative=colnames(neg),
+                          positive=colnames(pos)))
+g = applyDictionary(amazondfmStop, myDict, valuetype = "glob",case_insensitive = TRUE) 
+head(g)
+View(g)
+View(supos)
+summarise(g)
+head(g@x)
+View(amazondfmStop)
+
+g = as.data.frame(g)
+
+g = mutate(g, sum=negative+positive)
+g = mutate(g, rating=positive/sum)
+grus = data.frame(g, rus)
+gruss = select(grus, apart_id, author_id, rating)
+
+library(recommenderlab)
+?sparse
+r <- as(gruss, "realRatingMatrix")
 
