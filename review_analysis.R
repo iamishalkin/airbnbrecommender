@@ -79,12 +79,27 @@ gruss$apart_id <- as.character(gruss$apart_id)
 gruss$author_id <- as.character(gruss$author_id)
 
 gruss <- na.omit(gruss)
+
+duplicated(gruss)
+gruss[duplicated(gruss), ]
+grussd <- gruss[!duplicated(gruss), ]
+grussds <- unite(grussd, author_in_apart, c(author_id, apart_id), remove = FALSE)
+grussds = select(grussds, author_in_apart, rating)
+grussds = summarise(grussds, mean(rating))
+grussdss = separate(grussds, author_in_apart, c("author_id", "apart_id"), sep = "_")
+
 library(dplyr)
 
 #let's build a recommendation model
 library(recommenderlab)
-grussm <- 
-  r <- as(gruss, "realRatingMatrix")
+library(tidyr)
+crosspredict = spread(grussdss, key = author_id, value = "mean(rating)")
+crosspredict[is.na(crosspredict)] <- 0
+crosspredict = na.omit(crosspredict)
+crossmatrix <- as.matrix(crosspredict)
+crossmatrix <- sapply(data.frame(crossmatrix),as.numeric)
+crossmatrix <- as.numeric(crossmatrix)
+r <- as(crossmatrix, "realRatingMatrix")
 
 set.seed(100) #You shoud put here your own number
 r.test.ind = sample(seq_len(nrow(r)), size = nrow(r)*0.02)
@@ -98,7 +113,7 @@ recommender_models <- recommenderRegistry$get_entries(dataType =
                                                         "realRatingMatrix")
 recommender_models$IBCF_realRatingMatrix$parameters
 recc_model <- Recommender(data = r.main, method = "IBCF",
-                          parameter = list(k = 30))
+                          parameter = list(k = 1))
 recc_predicted <- predict(object = recc_model, newdata = r.test, n = 6)
 str(recc_predicted)
 recc_predicted <- predict(object = recc_model, newdata = r.test, n = 6)
@@ -106,6 +121,22 @@ recc_user_1 <- recc_predicted@items[["29455279"]]
 recc_user_1
 movies_user_1 <- recc_predicted@itemLabels[recc_user_1]
 movies_user_1
+
+recc_predicted <- predict(object = recc_model, newdata = r.test, n = 6)
+recc_user_1 <- recc_predicted@items[[3]]
+recc_user_1
+movies_user_1 <- recc_predicted@itemLabels[3]
+movies_user_1
+
+apartcn <- colnames(crossmatrix)
+recc_user_1 <- c(1:969)
+recc_user_1 <- data.frame(recc_user_1)
+apartch <- data.frame(recc_user_1, apartcn)
+
+recc_user_1 <- data.frame(recc_user_1)
+
+apart_names = left_join(recc_user_1, apartch, by = "recc_user_1")
+
 my_id = filter(gruss, author_id=="43516650")
 r <- as(gruss, "realRatingMatrix")
 my_r <- as(me_in_apart, "realRatingMatrix")
