@@ -28,7 +28,7 @@ dashboardPage(
     tabItems(
       # First tab content
       tabItem(tabName = "dashboard",
-              fluidRow(column(6, textInput("caption", "Пожалуйста, введите свой ID:", ""), actionButton("submit", label = "submit"), textInput("caption", "Если вы не знаете ID, введите логин и пароль:", "login"), textInput("caption", "", "password"), actionButton("submit", label = "submit")))
+              fluidRow(column(6, textInput("caption", "Пожалуйста, введите свой ID:", ""), actionButton("submit", label = "submit"), textInput("caption", "Если вы не знаете ID, введите логин и пароль:", "login"), textInput("caption", "", "password"), actionButton("submit", label = "submit"), DT::dataTableOutput('aparts')))
       )
     )
   )

@@ -24,8 +24,13 @@ rsib <- read_csv("~/airbnbrecommender2/full_data/reviews/Review_Novosibirsk.csv"
 volgo <- read_csv("~/airbnbrecommender2/full_data/reviews/Review_Volgograd.csv")
 samara <- read_csv("~/airbnbrecommender2/full_data/reviews/Samara.csv")
 volgograd <- read_csv("~/airbnbrecommender2/full_data/reviews/Volgograd.csv")
+msk <- read_csv("~/airbnbrecommender2/full_data/reviews/moscow.csv")
+sochi <- read_csv("~/airbnbrecommender2/full_data/listings/sochi.csv")
+spb <- read_csv("~/airbnbrecommender2/full_data/listings/spb.csv")
 review=rbind(spbreview,mskreview,sochireview,kazanreview,samarareview,rekat,rnn,rsib,volgo)
+aparts=rbind(ekat, kazan, nn, novosib, samara, volgograd, msk, sochi, spb)
 review <- review[!duplicated(review$review),]#delete dublicates
+aparts <- aparts[!duplicated(aparts$apart_id),]#delete dublicates
 user_reviews=review[,1:2]
 library(stringr)
 eng = str_detect(review$review, "[abcdefghijklmnopqrstuvwxyz]")
@@ -93,18 +98,11 @@ library(dplyr)
 #let's build a recommendation model
 library(recommenderlab)
 library(tidyr)
-crosspredict = spread(grussdss, key = author_id, value = "mean(rating)")
-crosspredict[is.na(crosspredict)] <- 0
-crosspredict = na.omit(crosspredict)
+crosspredict = spread(grussdss, key = apart_id, value = "mean(rating)")
+crosspredict$author_id <- as.numeric(crosspredict$author_id)
 crossmatrix <- as.matrix(crosspredict)
 crossmatrix <- sapply(data.frame(crossmatrix),as.numeric)
-crossmatrix <- as.numeric(crossmatrix)
 r <- as(crossmatrix, "realRatingMatrix")
-
-set.seed(100) #You shoud put here your own number
-r.test.ind = sample(seq_len(nrow(r)), size = nrow(r)*0.02)
-r.test = r[r.test.ind,]
-r.main = r[-r.test.ind,]
 
 ("Recommender based on item-based collaborative filtering (real
   data).")
@@ -112,30 +110,40 @@ r.main = r[-r.test.ind,]
 recommender_models <- recommenderRegistry$get_entries(dataType =
                                                         "realRatingMatrix")
 recommender_models$IBCF_realRatingMatrix$parameters
-recc_model <- Recommender(data = r.main, method = "IBCF",
-                          parameter = list(k = 1))
-recc_predicted <- predict(object = recc_model, newdata = r.test, n = 6)
+recc_model <- Recommender(data = r, method = "IBCF",
+                          parameter = list(k = 20))
+
+#or here
+recc_predicted <- predict(object = recc_model, newdata = r, n = 200)
 str(recc_predicted)
-recc_predicted <- predict(object = recc_model, newdata = r.test, n = 6)
-recc_user_1 <- recc_predicted@items[["29455279"]]
+recc_user_1 <- recc_predicted@items[[5]]
 recc_user_1
-movies_user_1 <- recc_predicted@itemLabels[recc_user_1]
+movies_user_1 <- recc_predicted@itemLabels[5]
 movies_user_1
 
-recc_predicted <- predict(object = recc_model, newdata = r.test, n = 6)
-recc_user_1 <- recc_predicted@items[[3]]
-recc_user_1
-movies_user_1 <- recc_predicted@itemLabels[3]
-movies_user_1
-
+#here i create the data frame that contents all the apartments in the given order
 apartcn <- colnames(crossmatrix)
-recc_user_1 <- c(1:969)
+recc_user_1 <- c(1:1578)
 recc_user_1 <- data.frame(recc_user_1)
 apartch <- data.frame(recc_user_1, apartcn)
 
+#here i look for a specific person in our data frame
 recc_user_1 <- data.frame(recc_user_1)
-
 apart_names = left_join(recc_user_1, apartch, by = "recc_user_1")
+apart_names$apartcn
+author <- data.frame(crosspredict$author_id, c(1:968))
+
+
+
+#i guess this thing is irrelevant
+X <- read_csv2("~/airbnbrecommender2/Data-city/X.csv")
+apartmute <- data.frame(X$X, aparts$apart_id)
+
+apartmute <- unite(apartmute, apartcn, c(X.X, aparts.apart_id), sep = "")
+apartmute = data.frame(apartmute, aparts)
+apart_names_mute = left_join(apart_names, apartmute, by="apartcn") 
+apartchm = left_join(apartch, apartmute, by="apartcn")
+apartchms = select(apartchm, apart_name, price_native, city, transit, neighborhood, description, min_nights, cancellation_policy, person_capacity, beds, bedrooms, bathrooms, interaction, notes, recc_user_1)
 
 my_id = filter(gruss, author_id=="43516650")
 r <- as(gruss, "realRatingMatrix")
