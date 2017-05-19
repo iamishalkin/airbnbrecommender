@@ -2,7 +2,9 @@ library(shiny)
 library(shinydashboard)
 
 dashboardPage(
-  dashboardHeader(dropdownMenu(type = "notifications",
+  dashboardHeader(
+    dropdownMenu(
+      type = "notifications",
                                notificationItem(
                                  text = "5 new users today",
                                  icon("users")
@@ -18,7 +20,22 @@ dashboardPage(
                                  status = "warning"
                                )
   )),
-  dashboardSidebar(
+  dashboardSidebar( 
+                    tags$img(height = 85, 
+                             width = 100,
+                             src = "logo.png"),
+                    tags$style(HTML("
+      @import url('//bootswatch.com/journal/bootstrap.css');
+      
+      h1 {
+        font-family: 'Lobster';
+        font-weight: 500;
+        line-height: 1.1;
+        color: #fd5c63;
+      }
+
+    ")),
+    tags$h1("Airbnb11"),
     sidebarMenu(
       menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
       menuItem("Widgets", tabName = "widgets", icon = icon("th"))
@@ -33,3 +50,8 @@ dashboardPage(
     )
   )
 )
+
+
+
+
+
