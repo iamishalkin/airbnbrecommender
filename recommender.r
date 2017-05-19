@@ -40,13 +40,34 @@ aparts=rbind(mskapart, spbapart, klgapart)
 #now users
 #load reviews
 
-spbreview <- read_csv("Data-review/Review_Saint-Petersburg--Russia.csv")
-
-
-mskreview=read_csv("Data-review/Review_Moscow--Russia.csv")
-review=rbind(spbreview,mskreview)
+#review analysis starts here
+#let's load tons of cities and reviews
+sochireview <- read_csv("full_data/reviews/Review_sochi.csv")
+spbreview <- read_csv("full_data/reviews/Review_spb.csv")
+kazanreview <- read_csv("full_data/reviews/Review_kazan.csv")
+samarareview <- read_csv("full_data/reviews/Review_samara.csv")
+mskreview=read_csv("full_data/reviews/Review_msk.csv")
+#let's unite them all!
+review=rbind(spbreview,mskreview,sochireview,kazanreview,samarareview)
 review <- review[!duplicated(review$review),]#delete dublicates
 user_reviews=review[,1:2]
+
+#now let's devide the dataset into russian and english (also other languages) groups
+library(stringr)
+str_detect(review$review, "[abcdefghijklmnopqrstuvwxyz]")
+str_detect(review$review, "[абвгдеёжзийклмнопрстуфхцчшщъыьэюя]")
+
+eng = str_detect(review$review, "[abcdefghijklmnopqrstuvwxyz]")
+eng = data.frame(eng)
+reviewlang = data.frame(review, eng)
+
+rus = str_detect(review$review, "[абвгдеёжзийклмнопрстуфхцчшщъыьэюя]")
+rus = data.frame(rus)
+reviewlang = data.frame(reviewlang, rus)
+
+rus = filter(reviewlang, rus == "TRUE")
+
+#code wrote by me concerning the review analysis continues at 158
 
 #find the most active user of airbnb
 users_activity=user_reviews %>% group_by(author_id) %>% summarise(count=n())
@@ -134,6 +155,7 @@ preprocessParams
 
 preprocessParams$rotation
 
+#let's upload the libraries!
 library(quanteda)
 library(jsonlite)
 library(stringr)
@@ -156,6 +178,9 @@ tokenize(amazonCorpus)
 tokenize(example, what = "character")
 tokenize(example, what = "sentence")
 amazondfm <- dfm(amazonCorpus)
+
+tokenize(rus$review)
+
 amazondfm[1:10,1:6]
 amazondfmStop <- dfm(amazonCorpus, ignoredFeatures = stopwords("russian"))
 amazondfmStop[1:10,1:6]
@@ -176,23 +201,6 @@ myDict <- dictionary(list(negative=neg,
 g = applyDictionary(amazondfmStop, myDict, valuetype = "glob",case_insensitive = TRUE) 
 head(g)
 
-
-supos <- read.csv2("~/airbnbrecommender/super-positive.csv")
-supos$word = as.character(supos$word)
-supos = readLines("~/airbnbrecommender/super-positive.csv")
-supos = na.omit(supos)
-supos <- corpus(supos$word)
-supos <- dfm(supos, stem = TRUE, language = "russian")
-head(supos)
-
-spos <- read.csv2("~/airbnbrecommender/spositive.csv")
-spos$word = as.character(spos$word)
-spos = readLines("~/airbnbrecommender/spositive.csv")
-spos = na.omit(spos)
-spos <- corpus(spos$word)
-spos <- dfm(spos, stem = TRUE, language = "russian")
-head(supos)
-
 pos <- read.csv2("~/airbnbrecommender/pozitiv.csv")
 pos$word = as.character(pos$word)
 pos <- corpus(pos$word)
@@ -205,19 +213,11 @@ neg <- corpus(neg$word)
 neg <- dfm(neg, stem = TRUE, language = "russian")
 head(neg)
 
-suneg <- read.csv2("~/airbnbrecommender/negative.csv")
-suneg$word = as.character(suneg$word)
-suneg <- corpus(suneg$word)
-suneg <- dfm(suneg, stem = TRUE, language = "russian")
-head(suneg)
-
 myDict <- dictionary(list(negative=colnames(neg),
                           positive=colnames(pos)))
 g = applyDictionary(amazondfmStop, myDict, valuetype = "glob",case_insensitive = TRUE) 
 head(g)
 View(g)
-View(supos)
-summarise(g)
 head(g@x)
 View(amazondfmStop)
 
@@ -227,8 +227,46 @@ g = mutate(g, sum=negative+positive)
 g = mutate(g, rating=positive/sum)
 grus = data.frame(g, rus)
 gruss = select(grus, apart_id, author_id, rating)
+gruss$apart_id <- as.character(gruss$apart_id)
+gruss$author_id <- as.character(gruss$author_id)
+
+grussapart <- gruss$apart_id
+grussapart = data.frame(grussapart)
+
+grussauthor <- gruss$author_id
+grussauthor = data.frame(grussauthor)
+
+gruss <- na.omit(gruss)
+gruss$apart_id <- as.factor(gruss$apart_id)
+
+grouprus <- group_by(gruss, author_id)
+
+library(dplyr)
 
 library(recommenderlab)
 ?sparse
 r <- as(gruss, "realRatingMatrix")
 
+
+rd = as.data.frame(r)
+
+set.seed(100) #You shoud put here your own number
+r.test.ind = sample(seq_len(nrow(r)), size = nrow(r)*0.2)
+r.test = r[r.test.ind,]
+r.main = r[-r.test.ind,]
+library(randomForest)
+rfModel <-randomForest(factor(win) ~ ., data=victory.main)
+summary(rfModel) 
+
+("Recommender based on item-based collaborative filtering (real
+data).")
+
+recommender_models <- recommenderRegistry$get_entries(dataType =
+                                                        "realRatingMatrix")
+recommender_models$IBCF_realRatingMatrix$parameters
+recc_model <- Recommender(data = r.main, method = "IBCF",
+                          parameter = list(k = 30))
+recc_model
+
+similarity_users10 <- similarity(r[1:10, ], method = "cosine", which = "users")
+as.matrix(similarity_users10)
