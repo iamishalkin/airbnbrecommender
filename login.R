@@ -1,5 +1,5 @@
-login="smth@gmail.com"
-password=""
+login="myjiayug3@gmail.com"
+password="443081seti"
 
 get_uid=function(login,password){
 command=paste('python login.py ',login, ' ', password)
@@ -21,4 +21,4 @@ if (wrong){
 }
 }
 
-a=get_uid(login, password )
+get_uid(login, password )
