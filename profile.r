@@ -183,6 +183,44 @@ for (i in c(1:length(unique(user_reviews1$author_id)))){
   profiles[i,] = make_profile(filter(user_reviews1, author_id==prof_num[i]))
 }
 #write.csv(profiles, "profiles.csv")
+profiles = profiles1
+
+
+
+
+## Отбор признаков (Feature Selection)
+library(caret)
+profiles = filter(profiles, bathrooms>0)
+profiles = filter(profiles, bedrooms>0)
+profiles = filter(profiles, bedrooms>0)
+#property_type_Tent, bed_type_Air_mattress, Sex, price_for2, price_for3, price_for4, price_for5plus
+profiles2 = subset(profiles, select = -c(property_type_Tent, bed_type_Air_mattress, Sex, price_for4, price_for5plus))
+
+scaledprofiles <- scale(profiles2[,2:length(profiles2[1,])])
+#выделяем главные компоненты, центрируем, шкалируем
+preprocessParams <- preProcess(scaledprofiles, method=c("center", "scale", "pca"))
+preprocessParams
+preprocessParams$rotation
+transformed.main <- predict(preprocessParams, profiles2)
+
+
+hc.complete=hclust(dist(transformed.main), method="complete")
+#hc.average=hclust(dist(scaledprofiles), method="average")
+#hc.single=hclust(dist(scaledprofiles), method="single")
+#hc.centroid=hclust(dist(scaledprofiles), method="centroid")
+plot(hc.complete,main="Complete Linkage", xlab="", sub="", cex=.9)
+#plot(hc.average, main="Average Linkage", xlab="", sub="", cex=.9)
+#plot(hc.single, main="Single Linkage", xlab="", sub="", cex=.9)
+#plot(hc.centroid, main="Centroid Linkage", xlab="", sub="", cex=.9)
+hclusters = cutree(hc.complete, 5)
+#hclusters = cutree(hc.average, 40)
+#hclusters = cutree(hc.single, 40)
+#hclusters = cutree(hc.centroid, 40)
+
+
+sum(summary(as.factor(hclusters)))
+profiles2$cluster = NA
+profiles2$cluster = hclusters
 
 
 
@@ -192,4 +230,3 @@ for (i in c(1:length(unique(user_reviews1$author_id)))){
 #3 - создать всем профили (для этого нужны все данные)
 #4 - knn грамотно провести - присвоить всем людям номер кластера
 #5 - присвоить кластер квартирам
-
