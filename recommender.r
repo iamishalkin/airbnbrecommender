@@ -26,6 +26,7 @@ selectcolumns=function(df){
   df=subset(df, select=-c(extra_price_native, cleaning_fee_native,square_feet))
   #df$cleaning_fee_native[-is.na]=mean
 }
+
 spbapart=selectcolumns(spbapart)
 mskapart=selectcolumns(mskapart)
 klgapart=selectcolumns(klgapart)
